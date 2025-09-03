@@ -540,8 +540,7 @@ class CorkboardApp extends EventEmitter {
         cardDiv.innerHTML = `
             <div class="note-card-inner">
                 <div class="note-card-front" style="background-color: ${card.color}; color: ${textColor};">
-                    <button class="card-delete-btn" onclick="app.deleteCard(&apos;${card.id}&apos;, event)" title="Delete card">×</button>
-                    <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
+                    <div class="card-delete-btn" data-card-id="${card.id}" title="Delete card">×</div>
                     <div class="card-content">
                         <textarea class="card-topic" 
                                   placeholder=""
@@ -569,15 +568,14 @@ class CorkboardApp extends EventEmitter {
                     </div>
                 </div>
                 <div class="note-card-back" style="background-color: ${card.color}; color: ${textColor};">
-                    <button class="card-delete-btn" onclick="app.deleteCard(&apos;${card.id}&apos;, event)" title="Delete card">×</button>
-                    <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
+                    <div class="card-delete-btn" data-card-id="${card.id}" title="Delete card">×</div>
                     <div class="card-content">
                         <textarea class="card-details" 
-                                  placeholder=""
+                                  placeholder="Card details..."
                                   readonly
                                   ondblclick="app.makeCardEditable(this, event)"
                                   onblur="app.makeCardReadonly(this)"
-                                  onmousedown="event.stopPropagation()">${card.body || ''}</textarea>
+                                  onmousedown="event.stopPropagation()">${card.details || ''}</textarea>
                     </div>
                 </div>
             </div>
@@ -753,16 +751,37 @@ class CorkboardApp extends EventEmitter {
     }
 
     setupCardEventListeners() {
-        // Card drag and drop
         document.querySelectorAll('.note-card').forEach(card => {
-            card.addEventListener('dragstart', (e) => this.handleCardDragStart(e));
-            card.addEventListener('dragend', (e) => this.handleCardDragEnd(e));
-            card.addEventListener('click', (e) => this.handleCardClick(e));
-            card.addEventListener('contextmenu', (e) => this.handleCardContextMenu(e));
+            // Remove existing listeners first
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            // Add listeners to the new card
+            newCard.addEventListener('click', (e) => this.handleCardClick(e));
+            newCard.addEventListener('contextmenu', (e) => this.handleCardContextMenu(e));
+            newCard.addEventListener('dragstart', (e) => this.handleCardDragStart(e));
+            newCard.addEventListener('dragend', (e) => this.handleCardDragEnd(e));
         });
 
-        // Board drop zone
+        // Use event delegation instead of individual button listeners
         const corkBoard = document.querySelector('.cork-board');
+        if (corkBoard) {
+            // Remove any existing click listeners
+            corkBoard.removeEventListener('click', this.handleButtonClicks);
+            
+            // Add new delegation listener
+            this.handleButtonClicks = (e) => {
+                if (e.target.classList.contains('card-delete-btn')) {
+                    e.stopPropagation();
+                    const cardId = e.target.getAttribute('data-card-id');
+                    this.deleteCard(cardId, e);
+                }
+            };
+            
+            corkBoard.addEventListener('click', this.handleButtonClicks);
+        }
+
+        // Board drop zone (reuse the same corkBoard reference)
         if (corkBoard) {
             corkBoard.addEventListener('drop', (e) => this.handleBoardDrop(e));
             corkBoard.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -852,9 +871,9 @@ class CorkboardApp extends EventEmitter {
     }
 
     handleCardClick(event) {
+        // Don't flip if clicking on delete button or card controls
         if (event.target.closest('.card-controls') || 
-            event.target.tagName === 'TEXTAREA' || 
-            event.target.tagName === 'INPUT') {
+            event.target.classList.contains('card-delete-btn')) {
             return;
         }
 
@@ -862,9 +881,11 @@ class CorkboardApp extends EventEmitter {
         
         if (event.ctrlKey || event.metaKey) {
             this.toggleCardSelection(cardId);
-        } else {
-            this.selectCard(cardId, !event.shiftKey);
+            return;
         }
+
+        // Flip the card on any click
+        this.flipCard(cardId, event);
     }
 
     handleCardContextMenu(event) {
