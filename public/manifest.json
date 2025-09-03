@@ -1,0 +1,79 @@
+{
+  "name": "Corkboard Pro",
+  "short_name": "Corkboard",
+  "description": "Advanced corkboard notes app with real-time collaboration",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#6b46c1",
+  "orientation": "any",
+  "categories": ["productivity", "business", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Card",
+      "short_name": "New Card",
+      "description": "Create a new note card",
+      "url": "/?action=new-card",
+      "icons": [{ "src": "/icons/shortcut-new.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "New Board",
+      "short_name": "New Board",
+      "description": "Create a new board",
+      "url": "/?action=new-board",
+      "icons": [{ "src": "/icons/shortcut-board.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Corkboard Pro on desktop showing multiple note cards"
+    },
+    {
+      "src": "/screenshots/mobile-narrow.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Corkboard Pro on mobile device"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+corkboard",
+      "url": "/share?data=%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "application/json": [".json"],
+        "text/plain": [".txt", ".md"]
+      }
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope": "/",
+  "id": "corkboard-pro",
+  "launch_handler": {
+    "client_mode": "auto"
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
+}

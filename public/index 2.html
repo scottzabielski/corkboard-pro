@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corkboard Pro - Advanced Notes Management</title>
+    <meta name="description" content="Advanced corkboard notes app with real-time collaboration">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6b46c1">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <div class="loading-screen" id="loading-screen">
+            <div class="loading-spinner"></div>
+            <p>Loading Corkboard Pro...</p>
+        </div>
+    </div>
+    
+    <!-- Touch indicator for mobile -->
+    <div id="touch-indicator" class="touch-indicator"></div>
+    
+    <!-- Offline indicator -->
+    <div id="offline-indicator" class="offline-indicator">
+        <span>📴</span> You're offline
+    </div>
+    
+    <!-- Toast notifications -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <!-- Templates for dynamic content -->
+    <template id="modal-template">
+        <div class="modal-overlay">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title"></h2>
+                    <button class="modal-close" aria-label="Close modal">×</button>
+                </div>
+                <div class="modal-body"></div>
+                <div class="modal-footer"></div>
+            </div>
+        </div>
+    </template>
+    
+    <template id="card-template">
+        <div class="note-card" draggable="true">
+            <button class="card-delete-btn" aria-label="Delete card">×</button>
+            <div class="note-card-inner">
+                <div class="note-card-front">
+                    <div class="card-header">
+                        <div class="card-controls">
+                            <button class="card-control color-picker-btn" title="Change color">
+                                <div class="color-indicator"></div>
+                                <input type="color" class="color-input">
+                            </button>
+                            <button class="card-control attachment-btn" title="Add attachment">📎</button>
+                            <button class="card-control duplicate-btn" title="Duplicate card">📋</button>
+                            <button class="card-control flip-btn" title="Flip card">↻</button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <textarea class="card-title" placeholder="Card title..." maxlength="100"></textarea>
+                        <textarea class="card-body" placeholder="Add your notes..." maxlength="1000"></textarea>
+                        <div class="card-meta">
+                            <div class="card-tags"></div>
+                            <div class="card-due-date" style="display: none;"></div>
+                        </div>
+                        <div class="card-attachments"></div>
+                    </div>
+                </div>
+                <div class="note-card-back">
+                    <div class="card-header">
+                        <div class="card-controls">
+                            <button class="card-control flip-btn" title="Flip card">↻</button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <textarea class="card-details" placeholder="Detailed notes, research, links..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/storage.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/collaboration.js"></script>
+    <script src="/js/components.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

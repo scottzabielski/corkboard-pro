@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <defs>
+    <pattern id="corkTexture" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="#B8860B"/>
+      <circle cx="15" cy="15" r="3" fill="#8B4513" opacity="0.3"/>
+      <circle cx="45" cy="25" r="2" fill="#A0522D" opacity="0.4"/>
+      <circle cx="75" cy="35" r="4" fill="#8B4513" opacity="0.2"/>
+      <circle cx="25" cy="55" r="2.5" fill="#A0522D" opacity="0.3"/>
+      <circle cx="85" cy="65" r="3.5" fill="#8B4513" opacity="0.4"/>
+      <circle cx="5" cy="85" r="2" fill="#A0522D" opacity="0.3"/>
+      <circle cx="65" cy="85" r="3" fill="#8B4513" opacity="0.2"/>
+      <path d="M20,10 Q30,15 25,25 Q15,20 20,10" fill="#A0522D" opacity="0.15"/>
+      <path d="M70,40 Q80,50 75,60 Q65,50 70,40" fill="#8B4513" opacity="0.15"/>
+      <path d="M40,70 Q50,80 45,90 Q35,80 40,70" fill="#A0522D" opacity="0.15"/>
+      <ellipse cx="35" cy="40" rx="8" ry="4" fill="#8B4513" opacity="0.1"/>
+      <ellipse cx="80" cy="20" rx="6" ry="3" fill="#A0522D" opacity="0.1"/>
+      <ellipse cx="60" cy="70" rx="7" ry="4" fill="#8B4513" opacity="0.1"/>
+    </pattern>
+    <filter id="roughPaper">
+      <feTurbulence baseFrequency="0.04" numOctaves="3" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2"/>
+    </filter>
+  </defs>
+  <rect width="300" height="300" fill="url(#corkTexture)" filter="url(#roughPaper)"/>
+  <rect width="300" height="300" fill="#B8860B" opacity="0.1"/>
+</svg>
