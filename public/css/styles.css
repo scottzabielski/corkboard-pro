@@ -609,8 +609,8 @@ body {
 }
 
 .color-option {
-    width: 20px;
-    height: 20px;
+    width: 28px;
+    height: 28px;
     border: 2px solid rgba(255, 255, 255, 0.8);
     border-radius: 50%;
     cursor: pointer;
@@ -622,6 +622,100 @@ body {
     transform: scale(1.1);
     border-color: rgba(255, 255, 255, 1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Card Links */
+.card-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center the links horizontally */
+    gap: 4px;
+    margin-top: -4px; /* Move higher up, negative margin to overlap with content */
+    margin-bottom: 16px; /* More bottom margin to ensure space */
+}
+
+.card-link {
+    display: inline-flex; /* Use inline-flex for dynamic width */
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    padding-right: 20px; /* Extra space for remove button */
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 12px;
+    transition: var(--transition);
+    position: relative;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+
+.card-link:hover {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    text-decoration: none;
+}
+
+.card-link-remove {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.8);
+    color: white;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.card-link:hover .card-link-remove {
+    opacity: 1;
+}
+
+.card-link-remove:hover {
+    background: rgba(220, 38, 38, 1);
+}
+
+/* Link Form */
+.link-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.form-input {
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.1);
 }
 
 /* Card Content */
@@ -814,7 +908,7 @@ body {
 /* Card Flip Button */
 .card-flip-btn {
     position: absolute;
-    bottom: 8px;
+    top: 8px;
     right: 8px;
     width: 20px;
     height: 20px;
@@ -833,6 +927,40 @@ body {
 
 .card-flip-btn:hover {
     opacity: 1;
+    transform: scale(1.2);
+}
+
+/* Card Delete Button */
+.card-delete-btn {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    z-index: 20;
+    line-height: 1;
+}
+
+.note-card:hover .card-delete-btn {
+    opacity: 1;
+    visibility: visible;
+}
+
+.card-delete-btn:hover {
+    background: rgba(220, 38, 38, 1);
     transform: scale(1.2);
 }
 
@@ -1003,36 +1131,6 @@ body {
     color: var(--error);
 }
 
-/* Delete Button */
-.card-delete-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(239, 68, 68, 0.8);
-    color: white;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    transition: var(--transition);
-    box-shadow: var(--shadow-sm);
-}
-
-.note-card:hover .card-delete-btn {
-    display: flex;
-}
-
-.card-delete-btn:hover {
-    background: var(--error);
-    transform: scale(1.1);
-    box-shadow: var(--shadow-md);
-}
 
 /* Floating Action Buttons */
 .fab-container {

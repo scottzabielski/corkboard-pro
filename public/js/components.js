@@ -153,8 +153,6 @@ class UIComponents {
     closeModal(modal) {
         if (!modal) return;
         
-        console.log('closeModal called for:', modal.querySelector('.modal-title')?.textContent || 'unknown modal');
-        console.trace('Modal close stack trace');
         
         const overlay = modal.classList.contains('modal-overlay') ? modal : modal.closest('.modal-overlay');
         if (!overlay) return;

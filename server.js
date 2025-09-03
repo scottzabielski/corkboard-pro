@@ -107,6 +107,15 @@ db.serialize(() => {
     joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (board_id) REFERENCES boards (id) ON DELETE CASCADE
   )`);
+
+  // Add links column to cards table if it doesn't exist
+  db.run(`ALTER TABLE cards ADD COLUMN links TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+      console.error('Error adding links column:', err);
+    } else {
+      console.log('Links column added to cards table (or already exists)');
+    }
+  });
 });
 
 // File upload configuration
@@ -171,9 +180,10 @@ app.get('/api/boards/:id', (req, res) => {
         return res.status(500).json({ error: err.message });
       }
       
-      // Parse tags for each card
+      // Parse tags and links for each card
       cards.forEach(card => {
         card.tags = card.tags ? JSON.parse(card.tags) : [];
+        card.links = card.links ? JSON.parse(card.links) : [];
       });
       
       res.json({ ...board, cards });
@@ -265,7 +275,7 @@ app.put('/api/cards/:id', (req, res) => {
   const fields = Object.keys(updates).filter(key => key !== 'id');
   const setClause = fields.map(field => `${field} = ?`).join(', ');
   const values = fields.map(field => {
-    if (field === 'tags') {
+    if (field === 'tags' || field === 'links') {
       return JSON.stringify(updates[field] || []);
     }
     return updates[field];
@@ -379,6 +389,7 @@ app.get('/api/shared/:token', (req, res) => {
       
       cards.forEach(card => {
         card.tags = card.tags ? JSON.parse(card.tags) : [];
+        card.links = card.links ? JSON.parse(card.links) : [];
       });
       
       res.json({ ...board, cards });

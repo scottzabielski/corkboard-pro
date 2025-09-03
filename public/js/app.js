@@ -540,6 +540,7 @@ class CorkboardApp extends EventEmitter {
         cardDiv.innerHTML = `
             <div class="note-card-inner">
                 <div class="note-card-front" style="background-color: ${card.color}; color: ${textColor};">
+                    <button class="card-delete-btn" onclick="app.deleteCard(&apos;${card.id}&apos;, event)" title="Delete card">×</button>
                     <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
                     <div class="card-content">
                         <textarea class="card-topic" 
@@ -562,12 +563,13 @@ class CorkboardApp extends EventEmitter {
                                 </div>
                             ` : ''}
                         </div>
-                        <div class="card-attachments">
-                            ${this.renderCardAttachments(card)}
+                        <div class="card-links">
+                            ${this.renderCardLinks(card)}
                         </div>
                     </div>
                 </div>
                 <div class="note-card-back" style="background-color: ${card.color}; color: ${textColor};">
+                    <button class="card-delete-btn" onclick="app.deleteCard(&apos;${card.id}&apos;, event)" title="Delete card">×</button>
                     <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
                     <div class="card-content">
                         <textarea class="card-details" 
@@ -592,12 +594,10 @@ class CorkboardApp extends EventEmitter {
                     <button class="color-option" style="background-color: #d1fae5" title="Light Green"
                             onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#d1fae5&apos;)"></button>
                 </div>
-                <button class="card-control attachment-btn" title="Add attachment"
-                        onclick="app.showAttachmentUpload(&apos;${card.id}&apos;, event)">📎</button>
+                <button class="card-control link-btn" title="Add link"
+                        onclick="app.addLink(&apos;${card.id}&apos;, event)">🔗</button>
                 <button class="card-control duplicate-btn" title="Duplicate card"
                         onclick="app.duplicateCard(&apos;${card.id}&apos;, event)">📋</button>
-                <button class="card-control delete-btn" title="Delete card"
-                        onclick="app.deleteCard(&apos;${card.id}&apos;, event)">×</button>
             </div>
         `;
 
@@ -612,6 +612,17 @@ class CorkboardApp extends EventEmitter {
                 ${Utils.sanitizeHTML(tag)}
                 <span class="card-tag-remove" onclick="app.removeTag(&apos;${card.id}&apos;, &apos;${tag}&apos;, event)">×</span>
             </span>
+        `).join('');
+    }
+
+    renderCardLinks(card) {
+        if (!card.links || card.links.length === 0) return '';
+        
+        return card.links.map(link => `
+            <a class="card-link" href="${link.url}" target="_blank" title="${Utils.sanitizeHTML(link.url)}">
+                🔗 ${Utils.sanitizeHTML(link.name)}
+                <span class="card-link-remove" onclick="app.removeLink(&apos;${card.id}&apos;, &apos;${link.id}&apos;, event)">×</span>
+            </a>
         `).join('');
     }
 
@@ -1009,12 +1020,15 @@ class CorkboardApp extends EventEmitter {
 
         this.saveState();
 
+        // Find nearest empty grid position
+        const nearestPosition = this.findNearestEmptyPosition(card.x, card.y);
+        
         const duplicateData = {
             ...card,
             id: undefined,
             title: card.title ? `${card.title} (Copy)` : '',
-            x: card.x + 30,
-            y: card.y + 30,
+            x: nearestPosition.x,
+            y: nearestPosition.y,
             z_index: (this.activeBoard.cards?.length || 0) + 1,
             created_at: undefined,
             updated_at: undefined
@@ -1159,9 +1173,115 @@ class CorkboardApp extends EventEmitter {
         // Hide the context menu first
         ui.hideContextMenu();
         
-        console.log('Creating color picker modal');
         const modal = ui.showModal('Change Card Color', colorPickerHTML);
-        console.log('Modal created:', modal);
+    }
+
+    // Link Management
+    async addLink(cardId, event = null) {
+        if (event) event.stopPropagation();
+
+        const card = this.getCardById(cardId);
+        if (!card) return;
+
+        const linkHTML = `
+            <div class="link-form">
+                <div class="form-group">
+                    <label>Link Name</label>
+                    <input type="text" id="linkName" placeholder="Enter link name" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="url" id="linkUrl" placeholder="https://example.com" class="form-input">
+                </div>
+            </div>
+        `;
+
+        const modal = ui.showModal('Add Link', linkHTML, {
+            buttons: [
+                {
+                    text: 'Cancel',
+                    type: 'secondary',
+                    onclick: `ui.closeModal(this.closest('.modal-overlay'))`
+                },
+                {
+                    text: 'Add Link',
+                    type: 'primary',
+                    onclick: `app.saveLink('${cardId}'); ui.closeModal(this.closest('.modal-overlay'))`
+                }
+            ]
+        });
+
+        // Focus the name input
+        setTimeout(() => {
+            const nameInput = document.getElementById('linkName');
+            if (nameInput) nameInput.focus();
+        }, 100);
+    }
+
+    async saveLink(cardId) {
+        const nameInput = document.getElementById('linkName');
+        const urlInput = document.getElementById('linkUrl');
+        
+        if (!nameInput || !urlInput) return;
+
+        const name = nameInput.value.trim();
+        const url = urlInput.value.trim();
+
+        if (!name || !url) {
+            alert('Please enter both a name and URL');
+            return;
+        }
+
+        // Validate URL
+        try {
+            new URL(url);
+        } catch (e) {
+            alert('Please enter a valid URL');
+            return;
+        }
+
+        const card = this.getCardById(cardId);
+        if (!card) return;
+
+        // Initialize links array if it doesn't exist
+        if (!card.links) {
+            card.links = [];
+        }
+
+        // Add the link
+        const newLink = {
+            id: Utils.generateId(),
+            name: name,
+            url: url,
+            createdAt: new Date().toISOString()
+        };
+
+        card.links.push(newLink);
+
+        // Update the server
+        await this.updateCard(cardId, 'links', card.links);
+
+        // Re-render all cards
+        this.renderCards();
+    }
+
+    async removeLink(cardId, linkId, event = null) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        const card = this.getCardById(cardId);
+        if (!card || !card.links) return;
+
+        // Remove the link
+        card.links = card.links.filter(link => link.id !== linkId);
+
+        // Update the server
+        await this.updateCard(cardId, 'links', card.links);
+
+        // Re-render all cards
+        this.renderCards();
     }
 
     // Tag Management - DISABLED (all methods preserved for easy restoration)
