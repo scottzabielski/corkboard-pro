@@ -13,6 +13,7 @@ class CorkboardApp extends EventEmitter {
         this.activeFilters = new Set();
         this.gridMode = true;
         this.gridSize = 280;
+        this.gridVerticalSize = 220;
         
         // Keyboard state
         this.keyboardShortcuts = new Map();
@@ -180,7 +181,7 @@ class CorkboardApp extends EventEmitter {
 
     loadSettings() {
         const settings = storage.loadFromLocal('app_settings') || {};
-        this.gridSize = settings.gridSize || 240;
+        this.gridSize = settings.gridSize || 280;
         
         // Grid is always enabled
         document.querySelector('.cork-board')?.classList.add('grid-mode');
@@ -539,7 +540,7 @@ class CorkboardApp extends EventEmitter {
         cardDiv.innerHTML = `
             <div class="note-card-inner">
                 <div class="note-card-front" style="background-color: ${card.color}; color: ${textColor};">
-                    <button class="card-flip-btn" onclick="app.flipCard('${card.id}', event)" title="Flip card">↻</button>
+                    <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
                     <div class="card-content">
                         <textarea class="card-topic" 
                                   placeholder=""
@@ -548,13 +549,15 @@ class CorkboardApp extends EventEmitter {
                                   onblur="app.makeCardReadonly(this)"
                                   onmousedown="event.stopPropagation()">${card.title || ''}</textarea>
                         <div class="card-meta">
+                            <!-- TAGS DISABLED - Uncomment to restore tag functionality
                             <div class="card-tags">
                                 ${this.renderCardTags(card)}
-                                <button class="add-tag-btn" onclick="app.addTag('${card.id}', event)">+ Tag</button>
+                                <button class="add-tag-btn" onclick="app.addTag(&apos;${card.id}&apos;, event)">+ Tag</button>
                             </div>
+                            -->
                             ${card.due_date ? `
                                 <div class="card-due-date ${isOverdue ? 'overdue' : isUpcoming ? 'upcoming' : ''}"
-                                     onclick="app.editDueDate('${card.id}', event)">
+                                     onclick="app.editDueDate(&apos;${card.id}&apos;, event)">
                                     📅 ${Utils.formatDate(card.due_date)}
                                 </div>
                             ` : ''}
@@ -565,7 +568,7 @@ class CorkboardApp extends EventEmitter {
                     </div>
                 </div>
                 <div class="note-card-back" style="background-color: ${card.color}; color: ${textColor};">
-                    <button class="card-flip-btn" onclick="app.flipCard('${card.id}', event)" title="Flip card">↻</button>
+                    <button class="card-flip-btn" onclick="app.flipCard(&apos;${card.id}&apos;, event)" title="Flip card">↻</button>
                     <div class="card-content">
                         <textarea class="card-details" 
                                   placeholder=""
@@ -577,17 +580,24 @@ class CorkboardApp extends EventEmitter {
                 </div>
             </div>
             <div class="card-controls-external">
-                <button class="card-control color-picker-btn" title="Change color">
-                    <div class="color-indicator" style="background-color: ${card.color}"></div>
-                    <input type="color" class="color-input" value="${card.color}" 
-                           onchange="app.changeCardColor('${card.id}', this.value)">
-                </button>
+                <div class="card-color-options">
+                    <button class="color-option" style="background-color: #fef3c7" title="Yellow"
+                            onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#fef3c7&apos;)"></button>
+                    <button class="color-option" style="background-color: #c6f6d5" title="Green"
+                            onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#c6f6d5&apos;)"></button>
+                    <button class="color-option" style="background-color: #bfdbfe" title="Blue"
+                            onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#bfdbfe&apos;)"></button>
+                    <button class="color-option" style="background-color: #fecaca" title="Pink"
+                            onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#fecaca&apos;)"></button>
+                    <button class="color-option" style="background-color: #d1fae5" title="Light Green"
+                            onclick="app.changeCardColor(&apos;${card.id}&apos;, &apos;#d1fae5&apos;)"></button>
+                </div>
                 <button class="card-control attachment-btn" title="Add attachment"
-                        onclick="app.showAttachmentUpload('${card.id}', event)">📎</button>
+                        onclick="app.showAttachmentUpload(&apos;${card.id}&apos;, event)">📎</button>
                 <button class="card-control duplicate-btn" title="Duplicate card"
-                        onclick="app.duplicateCard('${card.id}', event)">📋</button>
+                        onclick="app.duplicateCard(&apos;${card.id}&apos;, event)">📋</button>
                 <button class="card-control delete-btn" title="Delete card"
-                        onclick="app.deleteCard('${card.id}', event)">×</button>
+                        onclick="app.deleteCard(&apos;${card.id}&apos;, event)">×</button>
             </div>
         `;
 
@@ -600,7 +610,7 @@ class CorkboardApp extends EventEmitter {
         return card.tags.map(tag => `
             <span class="card-tag" onclick="app.filterByTag('${tag}')">
                 ${Utils.sanitizeHTML(tag)}
-                <span class="card-tag-remove" onclick="app.removeTag('${card.id}', '${tag}', event)">×</span>
+                <span class="card-tag-remove" onclick="app.removeTag(&apos;${card.id}&apos;, &apos;${tag}&apos;, event)">×</span>
             </span>
         `).join('');
     }
@@ -612,7 +622,7 @@ class CorkboardApp extends EventEmitter {
             <a class="card-attachment" href="${attachment.url}" target="_blank">
                 <span class="attachment-icon">${this.getAttachmentIcon(attachment.mimeType)}</span>
                 <span class="card-attachment-name">${Utils.sanitizeHTML(attachment.originalName)}</span>
-                <span class="card-attachment-remove" onclick="app.removeAttachment('${card.id}', '${attachment.id}', event)">×</span>
+                <span class="card-attachment-remove" onclick="app.removeAttachment(&apos;${card.id}&apos;, &apos;${attachment.id}&apos;, event)">×</span>
             </a>
         `).join('');
     }
@@ -697,19 +707,26 @@ class CorkboardApp extends EventEmitter {
             
             let hasChanges = false;
             
+            // Check and update title
             if (topicTextarea && topicTextarea.value !== (card.title || '')) {
-                card.title = topicTextarea.value;
+                const newTitle = topicTextarea.value;
+                card.title = newTitle;
                 hasChanges = true;
+                // Update server
+                this.updateCard(cardId, 'title', newTitle);
             }
             
+            // Check and update body
             if (detailsTextarea && detailsTextarea.value !== (card.body || '')) {
-                card.body = detailsTextarea.value;
+                const newBody = detailsTextarea.value;
+                card.body = newBody;
                 hasChanges = true;
+                // Update server
+                this.updateCard(cardId, 'body', newBody);
             }
             
-            // Only update if there were actual changes and user isn't typing
+            // Save to local storage if there were changes
             if (hasChanges) {
-                // Just update the local storage, don't call updateCard which might cause issues
                 this.saveToLocalStorage();
             }
         });
@@ -794,7 +811,7 @@ class CorkboardApp extends EventEmitter {
 
         // Always snap to grid
         x = this.snapToGrid(x);
-        y = this.snapToGrid(y);
+        y = this.snapToVerticalGrid(y);
         
         // Check if position is occupied by another card
         const isOccupied = this.activeBoard?.cards?.some(card => 
@@ -849,14 +866,15 @@ class CorkboardApp extends EventEmitter {
 
         const menuItems = [
             { text: 'Duplicate', icon: '📋', onclick: `app.duplicateCard('${cardId}')` },
-            { text: 'Change Color', icon: '🎨', onclick: `app.showColorPicker('${cardId}', event)` },
-            { text: 'Add Tag', icon: '🏷️', onclick: `app.addTag('${cardId}')` },
+            { text: 'Change Color', icon: '🎨', onclick: `console.log('Color picker clicked'); app.showColorPicker('${cardId}')` },
+            // { text: 'Add Tag', icon: '🏷️', onclick: `app.addTag('${cardId}')` }, // DISABLED - Uncomment to restore
             { text: 'Set Due Date', icon: '📅', onclick: `app.editDueDate('${cardId}')` },
             { separator: true },
             { text: 'Flip Card', icon: '↻', onclick: `app.flipCard('${cardId}')` },
             { separator: true },
             { text: 'Delete', icon: '🗑️', onclick: `app.deleteCard('${cardId}')`, class: 'danger' }
         ];
+        
 
         ui.showContextMenu(event.clientX, event.clientY, menuItems);
     }
@@ -888,7 +906,7 @@ class CorkboardApp extends EventEmitter {
         let x, y;
         if (position) {
             x = this.snapToGrid(position.x);
-            y = this.snapToGrid(position.y);
+            y = this.snapToVerticalGrid(position.y);
         } else {
             const emptyPosition = this.findEmptyGridPosition();
             x = emptyPosition.x;
@@ -1099,7 +1117,54 @@ class CorkboardApp extends EventEmitter {
         }
     }
 
-    // Tag Management
+    showColorPicker(cardId, event = null) {
+        if (event) event.stopPropagation();
+        console.log('showColorPicker called for card:', cardId);
+        
+        const card = this.getCardById(cardId);
+        if (!card) {
+            console.log('Card not found:', cardId);
+            return;
+        }
+        
+        const colors = [
+            '#fef3c7', '#fde68a', '#fbbf24', '#f59e0b', // Yellow
+            '#fed7aa', '#fdba74', '#fb923c', '#f97316', // Orange
+            '#fca5a5', '#f87171', '#ef4444', '#dc2626', // Red
+            '#f3e8ff', '#e9d5ff', '#c084fc', '#a855f7', // Purple
+            '#dbeafe', '#bfdbfe', '#60a5fa', '#3b82f6', // Blue
+            '#d1fae5', '#a7f3d0', '#6ee7b7', '#34d399', // Green
+            '#fef7cd', '#fef08a', '#facc15', '#eab308', // Yellow-green
+            '#ede9fe', '#ddd6fe', '#c7d2fe', '#a5b4fc'  // Light purple
+        ];
+
+        const colorPickerHTML = `
+            <div class="color-picker-colors">
+                ${colors.map(color => `
+                    <div class="color-picker-color ${color === card.color ? 'selected' : ''}" 
+                         style="background-color: ${color}"
+                         onclick="app.changeCardColor('${cardId}', '${color}'); ui.closeTopModal()"
+                         data-color="${color}">
+                    </div>
+                `).join('')}
+            </div>
+            <div class="color-picker-custom">
+                <input type="color" class="color-picker-input" 
+                       value="${card.color}"
+                       onchange="app.changeCardColor('${cardId}', this.value); ui.closeTopModal()">
+                <label>Custom color</label>
+            </div>
+        `;
+        
+        // Hide the context menu first
+        ui.hideContextMenu();
+        
+        console.log('Creating color picker modal');
+        const modal = ui.showModal('Change Card Color', colorPickerHTML);
+        console.log('Modal created:', modal);
+    }
+
+    // Tag Management - DISABLED (all methods preserved for easy restoration)
     async addTag(cardId, event = null) {
         if (event) event.stopPropagation();
 
@@ -1378,7 +1443,11 @@ class CorkboardApp extends EventEmitter {
 
     // Grid Management - Always enabled
     snapToGrid(value) {
-        return Math.round(value / this.gridSize) * this.gridSize;
+        return Math.round((value - 20) / this.gridSize) * this.gridSize + 20;
+    }
+    
+    snapToVerticalGrid(value) {
+        return Math.round((value - 20) / this.gridVerticalSize) * this.gridVerticalSize + 20;
     }
     
     findEmptyGridPosition() {
@@ -1394,12 +1463,12 @@ class CorkboardApp extends EventEmitter {
         
         // Try to find an empty grid position
         const cols = Math.floor(boardRect.width / this.gridSize);
-        const rows = Math.floor(boardRect.height / this.gridSize);
+        const rows = Math.floor(boardRect.height / this.gridVerticalSize);
         
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
                 const x = col * this.gridSize + 20; // Add margin
-                const y = row * this.gridSize + 20; // Add margin
+                const y = row * this.gridVerticalSize + 20; // Add margin
                 
                 if (!occupiedPositions.has(`${x},${y}`)) {
                     return { x, y };
@@ -1426,11 +1495,11 @@ class CorkboardApp extends EventEmitter {
         }
         
         const cols = Math.floor(boardRect.width / this.gridSize);
-        const rows = Math.floor(boardRect.height / this.gridSize);
+        const rows = Math.floor(boardRect.height / this.gridVerticalSize);
         
         // Convert target position to grid coordinates
         const targetCol = Math.floor(targetX / this.gridSize);
-        const targetRow = Math.floor(targetY / this.gridSize);
+        const targetRow = Math.floor(targetY / this.gridVerticalSize);
         
         // Search in expanding squares around the target position
         for (let radius = 0; radius < Math.max(cols, rows); radius++) {
@@ -1447,7 +1516,7 @@ class CorkboardApp extends EventEmitter {
                     // Check bounds
                     if (col >= 0 && col < cols && row >= 0 && row < rows) {
                         const x = col * this.gridSize + 20;
-                        const y = row * this.gridSize + 20;
+                        const y = row * this.gridVerticalSize + 20;
                         
                         if (!occupiedPositions.has(`${x},${y}`)) {
                             return { x, y };
@@ -1468,7 +1537,7 @@ class CorkboardApp extends EventEmitter {
         
         this.activeBoard.cards.forEach(async (card) => {
             let x = Math.round(card.x / this.gridSize) * this.gridSize + 20;
-            let y = Math.round(card.y / this.gridSize) * this.gridSize + 20;
+            let y = Math.round(card.y / this.gridVerticalSize) * this.gridVerticalSize + 20;
             
             // If this position is already occupied, find a nearby empty one
             let posKey = `${x},${y}`;
@@ -1478,7 +1547,7 @@ class CorkboardApp extends EventEmitter {
                 x += this.gridSize;
                 if (x > window.innerWidth - 240) {
                     x = 20;
-                    y += this.gridSize;
+                    y += this.gridVerticalSize;
                 }
                 posKey = `${x},${y}`;
                 attempts++;

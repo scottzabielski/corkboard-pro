@@ -146,8 +146,15 @@ class UIComponents {
         return modal;
     }
 
+    showModal(title, content, options = {}) {
+        return this.createModal(title, content, options);
+    }
+
     closeModal(modal) {
         if (!modal) return;
+        
+        console.log('closeModal called for:', modal.querySelector('.modal-title')?.textContent || 'unknown modal');
+        console.trace('Modal close stack trace');
         
         const overlay = modal.classList.contains('modal-overlay') ? modal : modal.closest('.modal-overlay');
         if (!overlay) return;
@@ -252,9 +259,14 @@ class UIComponents {
             if (item.separator) {
                 return '<div class="context-menu-separator"></div>';
             }
+            
+            // Escape quotes for HTML
+            const onclickHandler = item.disabled ? '' : `${item.onclick}; ui.hideContextMenu()`;
+            const escapedOnclick = onclickHandler.replace(/'/g, '&apos;');
+            
             return `
                 <div class="context-menu-item ${item.disabled ? 'disabled' : ''}" 
-                     onclick="${item.disabled ? '' : `${item.onclick}; ui.hideContextMenu()`}">
+                     onclick="${escapedOnclick}">
                     ${item.icon ? `<span class="context-menu-icon">${item.icon}</span>` : ''}
                     <span class="context-menu-text">${Utils.sanitizeHTML(item.text)}</span>
                     ${item.shortcut ? `<span class="context-menu-shortcut">${item.shortcut}</span>` : ''}
@@ -279,10 +291,32 @@ class UIComponents {
             menu.style.top = (y - rect.height) + 'px';
         }
 
-        // Hide menu on outside click
+        // Hide menu on outside click, but not on menu itself
+        const hideOnOutsideClick = (event) => {
+            if (!event.target.closest('.context-menu')) {
+                this.hideContextMenu();
+                document.removeEventListener('click', hideOnOutsideClick);
+            }
+        };
+        
         setTimeout(() => {
-            document.addEventListener('click', this.hideContextMenu.bind(this), { once: true });
-        }, 0);
+            document.addEventListener('click', hideOnOutsideClick);
+        }, 100);
+        
+        // Add hover behavior to keep menu open
+        menu.addEventListener('mouseenter', () => {
+            menu.classList.add('hovering');
+        });
+        
+        menu.addEventListener('mouseleave', () => {
+            menu.classList.remove('hovering');
+            // Hide menu after a delay when mouse leaves
+            setTimeout(() => {
+                if (!menu.classList.contains('hovering') && document.body.contains(menu)) {
+                    this.hideContextMenu();
+                }
+            }, 200);
+        });
 
         return menu;
     }

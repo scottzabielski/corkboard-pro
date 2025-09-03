@@ -452,8 +452,9 @@ body {
         var(--cork-bg),
         linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
-    background-size: 300px 300px, 280px 280px, 280px 280px;
+    background-size: 300px 300px, 280px 220px, 280px 220px;
     background-repeat: repeat, repeat, repeat;
+    background-position: 0 0, 20px 20px, 20px 20px;
 }
 
 /* Note Cards */
@@ -536,13 +537,11 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .note-card-back {
     transform: rotateY(180deg);
-    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
 }
 
 /* Card Header */
@@ -603,12 +602,26 @@ body {
     border: 2px solid rgba(255, 255, 255, 0.5);
 }
 
-.color-input {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
+.card-color-options {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.color-option {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
     cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.color-option:hover {
+    transform: scale(1.1);
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Card Content */
@@ -721,7 +734,7 @@ body {
     line-height: 1.5;
     color: inherit;
     width: 100%;
-    padding: 6px;
+    padding: 12px;
     border-radius: 6px;
     transition: var(--transition);
     font-family: inherit;
@@ -832,12 +845,16 @@ body {
     align-items: center;
 }
 
+/* TAGS DISABLED - Remove this line to restore tag functionality */
+.card-tags { display: none !important; }
+/* Original styles preserved for easy restoration:
 .card-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
     flex: 1;
 }
+*/
 
 .card-tag {
     background: rgba(107, 70, 193, 0.8);
@@ -874,6 +891,9 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* TAGS DISABLED - Remove this line to restore add-tag button */
+.add-tag-btn { display: none !important; }
+/* Original styles preserved:
 .add-tag-btn {
     position: absolute;
     bottom: 8px;
@@ -890,7 +910,9 @@ body {
     opacity: 0;
     visibility: hidden;
 }
+*/
 
+/* TAGS DISABLED - Hover states also preserved:
 .note-card:hover .add-tag-btn {
     opacity: 1;
     visibility: visible;
@@ -900,6 +922,7 @@ body {
     background: rgba(107, 70, 193, 0.2);
     border-color: var(--primary);
 }
+*/
 
 .card-due-date {
     background: rgba(239, 68, 68, 0.1);
