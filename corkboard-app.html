@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cork Board Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+            background: #2c2c2c;
+        }
+
+        .app-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toolbar {
+            background: #1a1a1a;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            overflow-x: auto;
+            min-height: 60px;
+        }
+
+        .board-tab {
+            background: #444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .board-tab:hover {
+            background: #555;
+        }
+
+        .board-tab.active {
+            background: #6b46c1;
+        }
+
+        .board-tab.drop-target {
+            background: #8b5cf6;
+            transform: scale(1.05);
+        }
+
+        .new-board-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px dashed transparent;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .new-board-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .new-board-btn.drop-target {
+            border-color: white;
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #764ba2 0%, #f093fb 100%);
+        }
+
+        .controls {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .grid-toggle {
+            background: #444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .grid-toggle.active {
+            background: #22c55e;
+        }
+
+        .cork-board {
+            flex: 1;
+            background: linear-gradient(135deg, #8b6914 0%, #a0761c 50%, #8b6914 100%);
+            position: relative;
+            overflow: auto;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.3);
+            background-image: 
+                linear-gradient(135deg, #8b6914 0%, #a0761c 50%, #8b6914 100%),
+                repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(0,0,0,0.05) 10px,
+                    rgba(0,0,0,0.05) 20px
+                );
+        }
+
+        .note-card {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            cursor: move;
+            user-select: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        .note-card.dragging {
+            opacity: 0.7;
+            transform: rotate(5deg) scale(1.1);
+            z-index: 1000;
+        }
+
+        .note-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .note-card-inner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .note-card.flipped .note-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .note-card-front, .note-card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 8px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.3),
+                0 1px 3px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-card-back {
+            transform: rotateY(180deg);
+        }
+
+        .note-card-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .flip-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .flip-btn:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.1);
+        }
+
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .color-picker input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+        }
+
+        .note-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .note-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            word-wrap: break-word;
+            width: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            outline: none;
+            color: inherit;
+        }
+
+        .note-details {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+            color: inherit;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(255,0,0,0.7);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .note-card:hover .delete-btn {
+            display: flex;
+        }
+
+        .add-card-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .add-card-btn:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="app-container"></div>
+
+    <script>
+        class CorkBoardApp {
+            constructor() {
+                this.boards = [
+                    { id: 1, name: 'Main Board', cards: [] }
+                ];
+                this.activeBoard = 1;
+                this.gridMode = false;
+                this.gridSize = 220;
+                this.draggedCard = null;
+                this.draggedFromBoard = null;
+                this.nextCardId = 1;
+                this.nextBoardId = 2;
+                this.init();
+            }
+
+            init() {
+                this.render();
+                this.attachEventListeners();
+            }
+
+            render() {
+                const app = document.getElementById('app');
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                
+                app.innerHTML = `
+                    <div class="toolbar">
+                        ${this.boards.map(board => `
+                            <div class="board-tab ${board.id === this.activeBoard ? 'active' : ''}" 
+                                 data-board-id="${board.id}"
+                                 ondrop="app.handleBoardDrop(event, ${board.id})"
+                                 ondragover="app.handleBoardDragOver(event)"
+                                 ondragleave="app.handleBoardDragLeave(event)">
+                                ${board.name}
+                            </div>
+                        `).join('')}
+                        <div class="new-board-btn" 
+                             ondrop="app.handleNewBoardDrop(event)"
+                             ondragover="app.handleBoardDragOver(event)"
+                             ondragleave="app.handleBoardDragLeave(event)">
+                            + New Board
+                        </div>
+                        <div class="controls">
+                            <div class="grid-toggle ${this.gridMode ? 'active' : ''}" onclick="app.toggleGrid()">
+                                Grid: ${this.gridMode ? 'ON' : 'OFF'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cork-board" 
+                         ondrop="app.handleDrop(event)"
+                         ondragover="app.handleDragOver(event)">
+                        ${currentBoard.cards.map(card => this.renderCard(card)).join('')}
+                    </div>
+                    <button class="add-card-btn" onclick="app.addNewCard()">+</button>
+                `;
+            }
+
+            renderCard(card) {
+                const textColor = this.getContrastColor(card.color);
+                return `
+                    <div class="note-card ${card.flipped ? 'flipped' : ''}" 
+                         id="card-${card.id}"
+                         style="left: ${card.x}px; top: ${card.y}px;"
+                         draggable="true"
+                         ondragstart="app.handleDragStart(event, ${card.id})"
+                         ondragend="app.handleDragEnd(event)">
+                        <button class="delete-btn" onclick="app.deleteCard(${card.id}, event)">×</button>
+                        <div class="note-card-inner">
+                            <div class="note-card-front" style="background-color: ${card.color}; color: ${textColor};">
+                                <div class="note-card-header">
+                                    <div class="color-picker" style="background-color: ${card.color};">
+                                        <input type="color" value="${card.color}" 
+                                               onchange="app.changeCardColor(${card.id}, this.value)"
+                                               onclick="event.stopPropagation()">
+                                    </div>
+                                    <button class="flip-btn" onclick="app.flipCard(${card.id}, event)">↻</button>
+                                </div>
+                                <div class="note-content">
+                                    <textarea class="note-title" 
+                                              placeholder="Click to add title..."
+                                              onmousedown="event.stopPropagation()"
+                                              oninput="app.updateCardTitle(${card.id}, this.value)">${card.title || ''}</textarea>
+                                </div>
+                            </div>
+                            <div class="note-card-back" style="background-color: ${card.color}; color: ${textColor};">
+                                <div class="note-card-header">
+                                    <div class="color-picker" style="background-color: ${card.color};">
+                                        <input type="color" value="${card.color}" 
+                                               onchange="app.changeCardColor(${card.id}, this.value)"
+                                               onclick="event.stopPropagation()">
+                                    </div>
+                                    <button class="flip-btn" onclick="app.flipCard(${card.id}, event)">↻</button>
+                                </div>
+                                <textarea class="note-details" 
+                                          placeholder="Add detailed notes here..."
+                                          onmousedown="event.stopPropagation()"
+                                          oninput="app.updateCardDetails(${card.id}, this.value)">${card.details || ''}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            getContrastColor(hexColor) {
+                const r = parseInt(hexColor.slice(1, 3), 16);
+                const g = parseInt(hexColor.slice(3, 5), 16);
+                const b = parseInt(hexColor.slice(5, 7), 16);
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                return luminance > 0.5 ? '#000000' : '#ffffff';
+            }
+
+            addNewCard() {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                const newCard = {
+                    id: this.nextCardId++,
+                    title: '',
+                    details: '',
+                    color: this.getRandomColor(),
+                    x: this.gridMode ? 20 : Math.random() * 400 + 50,
+                    y: this.gridMode ? 20 : Math.random() * 250 + 50,
+                    flipped: false
+                };
+                currentBoard.cards.push(newCard);
+                this.render();
+            }
+
+            getRandomColor() {
+                const colors = ['#fef3c7', '#fde68a', '#fbbf24', '#ddd6fe', '#c7d2fe', '#bfdbfe', '#d1fae5', '#fecaca', '#fed7aa'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            deleteCard(cardId, event) {
+                event.stopPropagation();
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                currentBoard.cards = currentBoard.cards.filter(c => c.id !== cardId);
+                this.render();
+            }
+
+            flipCard(cardId, event) {
+                event.stopPropagation();
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                const card = currentBoard.cards.find(c => c.id === cardId);
+                if (card) {
+                    card.flipped = !card.flipped;
+                    this.render();
+                }
+            }
+
+            changeCardColor(cardId, color) {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                const card = currentBoard.cards.find(c => c.id === cardId);
+                if (card) {
+                    card.color = color;
+                    this.render();
+                }
+            }
+
+            updateCardTitle(cardId, title) {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                const card = currentBoard.cards.find(c => c.id === cardId);
+                if (card) {
+                    card.title = title;
+                }
+            }
+
+            updateCardDetails(cardId, details) {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                const card = currentBoard.cards.find(c => c.id === cardId);
+                if (card) {
+                    card.details = details;
+                }
+            }
+
+            toggleGrid() {
+                this.gridMode = !this.gridMode;
+                if (this.gridMode) {
+                    this.snapAllToGrid();
+                }
+                this.render();
+            }
+
+            snapAllToGrid() {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                currentBoard.cards.forEach(card => {
+                    card.x = Math.round(card.x / this.gridSize) * this.gridSize;
+                    card.y = Math.round(card.y / this.gridSize) * this.gridSize;
+                });
+            }
+
+            handleDragStart(event, cardId) {
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                this.draggedCard = currentBoard.cards.find(c => c.id === cardId);
+                this.draggedFromBoard = this.activeBoard;
+                event.dataTransfer.effectAllowed = 'move';
+                event.target.classList.add('dragging');
+            }
+
+            handleDragEnd(event) {
+                event.target.classList.remove('dragging');
+            }
+
+            handleDragOver(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+            }
+
+            handleDrop(event) {
+                event.preventDefault();
+                if (!this.draggedCard) return;
+
+                const rect = event.currentTarget.getBoundingClientRect();
+                let x = event.clientX - rect.left - 100;
+                let y = event.clientY - rect.top - 100;
+
+                if (this.gridMode) {
+                    x = Math.round(x / this.gridSize) * this.gridSize;
+                    y = Math.round(y / this.gridSize) * this.gridSize;
+                }
+
+                const currentBoard = this.boards.find(b => b.id === this.activeBoard);
+                
+                if (this.draggedFromBoard !== this.activeBoard) {
+                    const sourceBoard = this.boards.find(b => b.id === this.draggedFromBoard);
+                    sourceBoard.cards = sourceBoard.cards.filter(c => c.id !== this.draggedCard.id);
+                    currentBoard.cards.push(this.draggedCard);
+                }
+
+                this.draggedCard.x = Math.max(0, x);
+                this.draggedCard.y = Math.max(0, y);
+                
+                this.draggedCard = null;
+                this.draggedFromBoard = null;
+                this.render();
+            }
+
+            handleBoardDragOver(event) {
+                event.preventDefault();
+                event.currentTarget.classList.add('drop-target');
+            }
+
+            handleBoardDragLeave(event) {
+                event.currentTarget.classList.remove('drop-target');
+            }
+
+            handleBoardDrop(event, boardId) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.currentTarget.classList.remove('drop-target');
+                
+                if (!this.draggedCard || boardId === this.draggedFromBoard) return;
+
+                const sourceBoard = this.boards.find(b => b.id === this.draggedFromBoard);
+                const targetBoard = this.boards.find(b => b.id === boardId);
+                
+                sourceBoard.cards = sourceBoard.cards.filter(c => c.id !== this.draggedCard.id);
+                this.draggedCard.x = 50;
+                this.draggedCard.y = 50;
+                targetBoard.cards.push(this.draggedCard);
+                
+                this.activeBoard = boardId;
+                this.draggedCard = null;
+                this.draggedFromBoard = null;
+                this.render();
+            }
+
+            handleNewBoardDrop(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                event.currentTarget.classList.remove('drop-target');
+                
+                if (!this.draggedCard) {
+                    this.createNewBoard();
+                    return;
+                }
+
+                const newBoard = {
+                    id: this.nextBoardId++,
+                    name: `Board ${this.nextBoardId - 1}`,
+                    cards: []
+                };
+
+                const sourceBoard = this.boards.find(b => b.id === this.draggedFromBoard);
+                sourceBoard.cards = sourceBoard.cards.filter(c => c.id !== this.draggedCard.id);
+                
+                this.draggedCard.x = 50;
+                this.draggedCard.y = 50;
+                newBoard.cards.push(this.draggedCard);
+                
+                this.boards.push(newBoard);
+                this.activeBoard = newBoard.id;
+                this.draggedCard = null;
+                this.draggedFromBoard = null;
+                this.render();
+            }
+
+            createNewBoard() {
+                const newBoard = {
+                    id: this.nextBoardId++,
+                    name: `Board ${this.nextBoardId - 1}`,
+                    cards: []
+                };
+                this.boards.push(newBoard);
+                this.activeBoard = newBoard.id;
+                this.render();
+            }
+
+            attachEventListeners() {
+                document.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('board-tab')) {
+                        this.activeBoard = parseInt(event.target.dataset.boardId);
+                        this.render();
+                    } else if (event.target.classList.contains('new-board-btn') && !this.draggedCard) {
+                        this.createNewBoard();
+                    }
+                });
+            }
+        }
+
+        const app = new CorkBoardApp();
+    </script>
+</body>
+</html>
